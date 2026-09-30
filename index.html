@@ -47,18 +47,15 @@
   @keyframes glowPulse { 0%, 100% { transform: scale(1); opacity: .55; } 50% { transform: scale(1.18); opacity: .9; } }
 
   /* ---------- Tela de acesso (gate por e-mail de associado) ---------- */
-  #gate { align-items: center; justify-content: center; padding: 24px; background: radial-gradient(circle at 20% -10%, rgba(105,158,207,.25), transparent 55%), var(--paper); }
+  #gate { align-items: center; justify-content: flex-start; padding: 24px; background: radial-gradient(circle at 20% -10%, rgba(105,158,207,.25), transparent 55%), var(--paper); }
   #gate.hidden { display: none; }
   .gate-card { width: 100%; max-width: 380px; text-align: center; margin: auto; padding: 20px 0; }
-  .gate-card img.avatar-hero { width: 150px; max-width: 36vw; height: auto; max-height: 20vh; object-fit: contain; margin: 0 auto 10px; }
-  .gate-logo { height: 26px; margin-bottom: 22px; opacity: .95; }
-  .gate-card h1 { font-size: 20px; font-weight: 800; margin: 0 0 6px; color: var(--azul-escuro); }
-  .gate-card p.sub { font-size: 13.5px; color: var(--text-dim); margin: 0 0 22px; line-height: 1.55; }
-  @media (max-height: 700px) {
-    .gate-card img.avatar-hero { max-height: 14vh; margin-bottom: 6px; }
-    .gate-logo { margin-bottom: 12px; }
-    .gate-card p.sub { margin-bottom: 14px; }
-  }
+  /* Tamanho fixo e pequeno de propósito — não depende de vh/zoom/DPI da tela
+     de quem acessa, pra nunca ficar grande demais em nenhuma configuração. */
+  .gate-card img.avatar-hero { width: 96px; height: auto; max-height: 96px; object-fit: contain; margin: 0 auto 8px; }
+  .gate-logo { height: 22px; margin-bottom: 16px; opacity: .95; }
+  .gate-card h1 { font-size: 19px; font-weight: 800; margin: 0 0 6px; color: var(--azul-escuro); }
+  .gate-card p.sub { font-size: 13px; color: var(--text-dim); margin: 0 0 16px; line-height: 1.5; }
   .gate-form { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; text-align: left; box-shadow: 0 10px 30px rgba(58,82,134,.08); }
   .gate-form label { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .3px; }
   .gate-form input { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 13px; font-size: 14.5px; background: var(--paper); color: var(--text); }
