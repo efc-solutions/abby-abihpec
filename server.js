@@ -25,7 +25,16 @@ const MAX_SOURCE_CHARS = 6000;
 // GitHub via navegador). Por isso servimos só os arquivos públicos
 // explicitamente, em vez de expor a raiz inteira como estática — assim
 // server.js, package.json e .env não ficam acessíveis por URL.
+//
+// A página principal NUNCA pode ser cacheada (nem pelo navegador, nem por
+// proxy corporativo no meio do caminho) — sem isso, quando corrigimos algo
+// no index.html, quem estiver atrás de um proxy que guarda páginas continua
+// vendo a versão antiga mesmo em aba anônima.
 app.get('/', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.set('Surrogate-Control', 'no-store');
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 const PUBLIC_ASSETS = ['abby-full.webp', 'abby-head.webp', 'abihpec-logo.png'];
