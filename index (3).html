@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Abby — Agente IA ABIHPEC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Identidade visual ABIHPEC — Plataforma de IA (Summit Inovação) */
+    --azul-medio: #3B75AB;
+    --azul-escuro: #3A5286;
+    --azul-claro: #699ECF;
+    --creme: #FDFAF7;
+    --branco: #FFFFFF;
+
+    --paper: var(--creme); --panel: var(--branco); --border: #e3ddd2;
+    --text: #26334a; --text-dim: #6c7690;
+    --azul: var(--azul-medio); --azul-deep: var(--azul-escuro); --azul-light: var(--azul-claro);
+    --tag-anvisa: #1f7a4d; --tag-inmetro: #96631a; --tag-abihpec: var(--azul-medio); --tag-outro: #6a5a95;
+    --danger: #b3261e; --radius-lg: 20px; --radius-sm: 10px;
+    --font: 'Montserrat', -apple-system, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --paper: #10192a; --panel: #17233a; --border: #29385a; --text: #eaeef6; --text-dim: #9aa7c2; }
+  }
+  :root[data-theme="dark"] { --paper: #10192a; --panel: #17233a; --border: #29385a; --text: #eaeef6; --text-dim: #9aa7c2; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--paper); color: var(--text); font-family: var(--font); overflow-x: hidden; }
+  #app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+  #gate { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; overflow-y: auto; }
+  button, input, select, textarea { font-family: var(--font); }
+
+  /* ---------- Avatar da Abby (animado) ---------- */
+  .avatar { border-radius: 50%; object-fit: cover; display: block; background: linear-gradient(160deg, var(--azul-claro), var(--azul-medio)); }
+  .avatar-head { object-position: center 14%; animation: avatarBob 4.2s ease-in-out infinite; }
+  .avatar-head.thinking { animation: avatarBobFast .85s ease-in-out infinite; }
+  @keyframes avatarBob { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-2px) rotate(-1.2deg); } }
+  @keyframes avatarBobFast { 0%, 100% { transform: translateY(0) rotate(0deg) scale(1); } 50% { transform: translateY(-1.5px) rotate(1.2deg) scale(1.02); } }
+  .avatar-hero { animation: avatarFloat 5s ease-in-out infinite; filter: url(#hairWiggle); }
+  @keyframes avatarFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .avatar-glow { position: relative; display: inline-flex; }
+  .avatar-glow::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; background: radial-gradient(circle, rgba(105,158,207,.55), transparent 70%); z-index: -1; animation: glowPulse 2.6s ease-in-out infinite; opacity: 0; transition: opacity .2s; }
+  .avatar-glow.thinking::after { opacity: 1; }
+  @keyframes glowPulse { 0%, 100% { transform: scale(1); opacity: .55; } 50% { transform: scale(1.18); opacity: .9; } }
+
+  /* ---------- Tela de acesso (gate por e-mail de associado) ---------- */
+  #gate { align-items: center; justify-content: center; padding: 24px; background: radial-gradient(circle at 20% -10%, rgba(105,158,207,.25), transparent 55%), var(--paper); }
+  #gate.hidden { display: none; }
+  .gate-card { width: 100%; max-width: 380px; text-align: center; margin: auto; padding: 20px 0; }
+  .gate-card img.avatar-hero { width: 150px; max-width: 36vw; height: auto; max-height: 20vh; object-fit: contain; margin: 0 auto 10px; }
+  .gate-logo { height: 26px; margin-bottom: 22px; opacity: .95; }
+  .gate-card h1 { font-size: 20px; font-weight: 800; margin: 0 0 6px; color: var(--azul-escuro); }
+  .gate-card p.sub { font-size: 13.5px; color: var(--text-dim); margin: 0 0 22px; line-height: 1.55; }
+  @media (max-height: 700px) {
+    .gate-card img.avatar-hero { max-height: 14vh; margin-bottom: 6px; }
+    .gate-logo { margin-bottom: 12px; }
+    .gate-card p.sub { margin-bottom: 14px; }
+  }
+  .gate-form { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; text-align: left; box-shadow: 0 10px 30px rgba(58,82,134,.08); }
+  .gate-form label { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .3px; }
+  .gate-form input { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 13px; font-size: 14.5px; background: var(--paper); color: var(--text); }
+  .gate-form input:focus { outline: 2px solid var(--azul-claro); outline-offset: 1px; }
+  .gate-form button { width: 100%; margin-top: 14px; background: var(--azul-medio); color: #fff; border: none; border-radius: var(--radius-sm); padding: 13px; font-weight: 700; font-size: 14.5px; cursor: pointer; transition: background .15s; }
+  .gate-form button:hover { background: var(--azul-escuro); }
+  .gate-form button:disabled { opacity: .6; cursor: default; }
+  .gate-msg { font-size: 12.5px; margin-top: 11px; min-height: 16px; }
+  .gate-msg.error { color: var(--danger); }
+  .gate-msg.ok { color: var(--tag-anvisa); }
+  .gate-foot { font-size: 11.5px; color: var(--text-dim); margin-top: 18px; }
+
+  /* ---------- App principal ---------- */
+  header.hero { background: linear-gradient(135deg, var(--azul-escuro) 0%, #2c3f68 100%); color: #fff; padding: 16px 20px 14px; position: relative; overflow: hidden; flex-shrink: 0; }
+  header.hero::before { content: ""; position: absolute; inset: 0; opacity: .35; pointer-events: none; background-image: radial-gradient(circle, rgba(255,255,255,.12) 1px, transparent 1.4px); background-size: 26px 26px; }
+  .hero-top { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; margin-bottom: 12px; }
+  .brand-logo { height: 18px; filter: brightness(0) invert(1); opacity: .92; }
+  .switch-email { background: rgba(255,255,255,.1); border: none; color: #cfd9ec; font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 999px; cursor: pointer; font-family: var(--font); }
+  .switch-email:hover { background: rgba(255,255,255,.18); }
+  .hero-row { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
+  .hero-row .avatar-head { width: 44px; height: 44px; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(255,255,255,.16); }
+  .hero-text h1 { font-size: 18px; margin: 0; font-weight: 700; letter-spacing: .2px; }
+  .hero-text p { margin: 2px 0 0; font-size: 12px; color: #c3cee2; }
+  nav.tabs { display: flex; gap: 6px; margin-top: 14px; position: relative; z-index: 1; flex-wrap: wrap; }
+  nav.tabs button { font-family: var(--font); font-weight: 600; font-size: 12.5px; border: none; cursor: pointer; padding: 8px 14px; border-radius: 999px; background: rgba(255,255,255,.08); color: #cbd6e6; display: flex; align-items: center; gap: 6px; transition: background .15s, color .15s; }
+  nav.tabs button svg { width: 14px; height: 14px; }
+  nav.tabs button.active { background: #fff; color: var(--azul-escuro); }
+  main { flex: 1; overflow: hidden; display: flex; }
+  .view { flex: 1; display: none; overflow: hidden; flex-direction: column; }
+  .view.active { display: flex; }
+  #chatLog { flex: 1; overflow-y: auto; padding: 18px 16px; display: flex; flex-direction: column; gap: 14px; }
+  .msg-row { display: flex; gap: 9px; max-width: 88%; }
+  .msg-row.user { align-self: flex-end; flex-direction: row-reverse; max-width: 82%; }
+  .msg-row.bot .avatar-head { width: 26px; height: 26px; flex-shrink: 0; margin-top: 2px; }
+  .bubble { padding: 11px 14px; border-radius: var(--radius-sm); font-size: 14.5px; line-height: 1.55; white-space: pre-wrap; }
+  .msg-row.bot .bubble { background: var(--panel); border: 1px solid var(--border); border-top-left-radius: 3px; }
+  .msg-row.user .bubble { background: var(--azul-medio); color: #fff; border-top-right-radius: 3px; }
+  .msg-row.system .bubble { background: transparent; color: var(--text-dim); font-size: 12.5px; text-align: center; border: none; }
+  .msg-row.system { align-self: center; max-width: 92%; }
+  .empty-hint { text-align: center; padding: 40px 24px; margin: auto; max-width: 340px; }
+  .empty-hint .avatar-head { width: 84px; height: 84px; margin: 0 auto 16px; }
+  .empty-hint h2 { font-size: 17px; margin: 0 0 6px; font-weight: 700; color: var(--azul-escuro); }
+  .empty-hint p { font-size: 13px; color: var(--text-dim); margin: 0; line-height: 1.6; }
+  #chatInputBar { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
+  #chatInputBar textarea { flex: 1; resize: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 13px; font-family: var(--font); font-size: 14px; background: var(--paper); color: var(--text); max-height: 110px; }
+  #chatInputBar textarea:focus { outline: 2px solid var(--azul-claro); outline-offset: 1px; }
+  #chatInputBar button { background: var(--azul-medio); color: #fff; border: none; border-radius: var(--radius-sm); padding: 0 18px; font-weight: 700; font-family: var(--font); cursor: pointer; font-size: 14px; }
+  #chatInputBar button:hover { background: var(--azul-escuro); }
+  #chatInputBar button:disabled { opacity: .5; cursor: default; }
+  #kbView { overflow-y: auto; padding: 18px 16px 32px; }
+  .kb-budget { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; font-size: 13px; margin-bottom: 16px; }
+  .kb-budget .bar-bg { background: var(--paper); border-radius: 6px; height: 6px; overflow: hidden; }
+  .kb-budget .bar-fill { height: 100%; background: linear-gradient(90deg, var(--azul-medio), var(--azul-claro)); transition: width .2s; }
+  .kb-budget.warn .bar-fill { background: linear-gradient(90deg, #c98a12, #e0a83b); }
+  .kb-budget.over .bar-fill { background: var(--danger); }
+  .kb-form { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; margin-bottom: 20px; }
+  .kb-form h3 { margin: 0 0 4px; font-size: 15px; font-weight: 700; color: var(--azul-escuro); }
+  .kb-form > p.hint { margin: 0 0 14px; font-size: 12px; color: var(--text-dim); }
+  .kb-form label { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-dim); margin: 12px 0 4px; }
+  .kb-form input, .kb-form select, .kb-form textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 11px; font-family: var(--font); font-size: 13.5px; background: var(--paper); color: var(--text); }
+  .kb-form textarea { min-height: 110px; resize: vertical; font-size: 12.5px; }
+  .kb-form .char-count { font-size: 11px; color: var(--text-dim); text-align: right; margin-top: 3px; }
+  .kb-form .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .kb-form .row > div { flex: 1; min-width: 140px; }
+  .kb-form button { margin-top: 15px; background: var(--azul-escuro); color: #fff; border: none; border-radius: var(--radius-sm); padding: 10px 18px; font-weight: 700; font-family: var(--font); cursor: pointer; font-size: 13.5px; }
+  .kb-form .form-msg { font-size: 12px; margin-top: 9px; }
+  .kb-form .form-msg.error { color: var(--danger); }
+  .kb-form .form-msg.ok { color: var(--tag-anvisa); }
+  .source-card { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--azul-medio); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 9px; }
+  .source-card .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .source-card h4 { margin: 0; font-size: 13.5px; font-weight: 600; }
+  .source-card .meta { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .source-card .tag { display: inline-block; font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 20px; color: #fff; }
+  .source-card .snippet { font-size: 12.5px; color: var(--text-dim); margin-top: 8px; max-height: 54px; overflow: hidden; }
+  .source-card button.del { background: none; border: 1px solid var(--border); color: var(--danger); border-radius: 7px; padding: 4px 9px; font-size: 11px; cursor: pointer; font-family: var(--font); }
+  .no-sources { text-align: center; color: var(--text-dim); font-size: 13px; padding: 34px 10px; }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- Filtro SVG que dá o leve "balanço" no cabelo da Abby no avatar grande -->
+<svg width="0" height="0" style="position:absolute">
+  <filter id="hairWiggle">
+    <feTurbulence type="fractalNoise" numOctaves="2" seed="7" result="noise">
+      <animate attributeName="baseFrequency" values="0.010 0.014;0.016 0.010;0.010 0.014" dur="7s" repeatCount="indefinite" />
+    </feTurbulence>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G" />
+  </filter>
+</svg>
+
+<div id="gate">
+  <div class="gate-card">
+    <img class="avatar-hero" src="/abby-full.webp" alt="Abby">
+    <img class="gate-logo" src="/abihpec-logo.png" alt="ABIHPEC">
+    <h1>Oi, eu sou a Abby</h1>
+    <p class="sub">Assistente de IA da ABIHPEC para Inovação e Regulatório do setor de Higiene Pessoal, Perfumaria e Cosméticos. Acesso exclusivo para associados.</p>
+    <div class="gate-form">
+      <label for="gateEmail">Seu e-mail</label>
+      <input id="gateEmail" type="email" placeholder="voce@empresa.com.br" autocomplete="email">
+      <label for="gatePassword" style="margin-top:12px">Senha de acesso</label>
+      <input id="gatePassword" type="password" placeholder="Senha fornecida pela ABIHPEC" autocomplete="current-password">
+      <button id="gateSubmit">Entrar</button>
+      <div id="gateMsg" class="gate-msg"></div>
+    </div>
+    <p class="gate-foot">Não sabe a senha? Fale com a ABIHPEC.</p>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <header class="hero">
+    <div class="hero-top">
+      <img class="brand-logo" src="/abihpec-logo.png" alt="ABIHPEC">
+      <button class="switch-email" id="switchEmailBtn" title="Trocar e-mail">trocar e-mail</button>
+    </div>
+    <div class="hero-row">
+      <div class="avatar-glow" id="headerGlow">
+        <img class="avatar avatar-head" id="headerAvatar" src="/abby-head.webp" alt="Abby">
+      </div>
+      <div class="hero-text">
+        <h1>Abby — Agente IA ABIHPEC</h1>
+        <p>Inovação &amp; Regulatório do setor de Higiene Pessoal, Perfumaria e Cosméticos</p>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button id="tabChatBtn" class="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Conversar com a Abby
+      </button>
+      <button id="tabKbBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Base de Conhecimento
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="chatView" class="view active">
+      <div id="chatLog"></div>
+      <div id="chatInputBar">
+        <textarea id="chatInput" rows="1" placeholder="Pergunte à Abby sobre inovação ou regulatório do setor..."></textarea>
+        <button id="sendBtn">Enviar</button>
+      </div>
+    </section>
+
+    <section id="kbView" class="view">
+      <div id="kbBudget" class="kb-budget">
+        <span id="kbBudgetLabel">carregando base de conhecimento...</span>
+        <div class="bar-bg"><div id="kbBudgetBar" class="bar-fill" style="width:0%"></div></div>
+      </div>
+
+      <div class="kb-form">
+        <h3>Adicionar fonte</h3>
+        <p class="hint">Normas, comunicados, cadernos regulatórios ou manuais — a Abby só responde com base no que estiver aqui.</p>
+        <label>Título</label>
+        <input id="fTitle" type="text" placeholder="Ex: RDC 07/2015 — Cosméticos Infantis">
+        <div class="row">
+          <div>
+            <label>Origem / link</label>
+            <input id="fOrigin" type="text" placeholder="Ex: gov.br/anvisa ou nome do documento">
+          </div>
+          <div>
+            <label>Categoria</label>
+            <select id="fCategory">
+              <option value="Anvisa">Anvisa</option>
+              <option value="Inmetro">Inmetro</option>
+              <option value="ABIHPEC">ABIHPEC</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </div>
+        </div>
+        <label>Conteúdo</label>
+        <textarea id="fContent" placeholder="Cole aqui o conteúdo desta fonte..."></textarea>
+        <div class="char-count" id="fCharCount">0 caracteres</div>
+        <button id="fSubmit">Adicionar à base</button>
+        <div id="fMsg" class="form-msg"></div>
+      </div>
+
+      <div id="sourcesList"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function () {
+  const MAX_KB_CHARS = 50000;
+  const MAX_SOURCE_CHARS = 6000;
+  let sources = [];
+  let history = [];
+  let sending = false;
+  let verifiedEmail = "";
+
+  // ---------- Elementos: gate ----------
+  const gate = document.getElementById("gate");
+  const appEl = document.getElementById("app");
+  const gateEmail = document.getElementById("gateEmail");
+  const gatePassword = document.getElementById("gatePassword");
+  const gateSubmit = document.getElementById("gateSubmit");
+  const gateMsg = document.getElementById("gateMsg");
+  const switchEmailBtn = document.getElementById("switchEmailBtn");
+
+  // ---------- Elementos: app ----------
+  const chatLog = document.getElementById("chatLog");
+  const chatInput = document.getElementById("chatInput");
+  const sendBtn = document.getElementById("sendBtn");
+  const headerGlow = document.getElementById("headerGlow");
+  const headerAvatar = document.getElementById("headerAvatar");
+  const tabChatBtn = document.getElementById("tabChatBtn");
+  const tabKbBtn = document.getElementById("tabKbBtn");
+  const chatView = document.getElementById("chatView");
+  const kbView = document.getElementById("kbView");
+  const sourcesList = document.getElementById("sourcesList");
+  const kbBudget = document.getElementById("kbBudget");
+  const kbBudgetLabel = document.getElementById("kbBudgetLabel");
+  const kbBudgetBar = document.getElementById("kbBudgetBar");
+  const fTitle = document.getElementById("fTitle");
+  const fOrigin = document.getElementById("fOrigin");
+  const fCategory = document.getElementById("fCategory");
+  const fContent = document.getElementById("fContent");
+  const fCharCount = document.getElementById("fCharCount");
+  const fSubmit = document.getElementById("fSubmit");
+  const fMsg = document.getElementById("fMsg");
+
+  // ================= Gate de acesso (e-mail + senha) =================
+  function showGate(message) {
+    appEl.style.display = "none";
+    gate.classList.remove("hidden");
+    if (message) { gateMsg.textContent = message; gateMsg.className = "gate-msg error"; }
+  }
+  function showApp() {
+    gate.classList.add("hidden");
+    appEl.style.display = "flex";
+    loadSources();
+  }
+
+  async function verifyAccess(email, password) {
+    try {
+      const res = await fetch("/api/access/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      return !!data.allowed;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async function handleGateSubmit() {
+    const email = gateEmail.value.trim().toLowerCase();
+    const password = gatePassword.value;
+    gateMsg.textContent = "";
+    gateMsg.className = "gate-msg";
+    if (!email || !email.includes("@")) {
+      gateMsg.textContent = "Digite um e-mail válido.";
+      gateMsg.className = "gate-msg error";
+      return;
+    }
+    if (!password) {
+      gateMsg.textContent = "Digite a senha de acesso.";
+      gateMsg.className = "gate-msg error";
+      return;
+    }
+    gateSubmit.disabled = true;
+    gateSubmit.textContent = "Verificando...";
+    const allowed = await verifyAccess(email, password);
+    gateSubmit.disabled = false;
+    gateSubmit.textContent = "Entrar";
+    if (allowed) {
+      verifiedEmail = email;
+      localStorage.setItem("abby_verified_email", email);
+      showApp();
+    } else {
+      gateMsg.textContent = "Senha incorreta. Verifique com a ABIHPEC.";
+      gateMsg.className = "gate-msg error";
+    }
+  }
+  gateSubmit.onclick = handleGateSubmit;
+  gateEmail.addEventListener("keydown", (e) => { if (e.key === "Enter") gatePassword.focus(); });
+  gatePassword.addEventListener("keydown", (e) => { if (e.key === "Enter") handleGateSubmit(); });
+
+  switchEmailBtn.onclick = () => {
+    localStorage.removeItem("abby_verified_email");
+    verifiedEmail = "";
+    gateEmail.value = "";
+    gatePassword.value = "";
+    showGate();
+  };
+
+  (function initGate() {
+    const stored = (localStorage.getItem("abby_verified_email") || "").trim().toLowerCase();
+    if (!stored) { showGate(); return; }
+    verifiedEmail = stored;
+    showApp();
+  })();
+
+  // ================= Abas =================
+  function switchTab(tab) {
+    chatView.classList.toggle("active", tab === "chat");
+    kbView.classList.toggle("active", tab === "kb");
+    tabChatBtn.classList.toggle("active", tab === "chat");
+    tabKbBtn.classList.toggle("active", tab === "kb");
+  }
+  tabChatBtn.onclick = () => switchTab("chat");
+  tabKbBtn.onclick = () => switchTab("kb");
+
+  // ================= Chat =================
+  function addRow(role, text) {
+    const row = document.createElement("div");
+    row.className = "msg-row " + role;
+    if (role === "bot") {
+      const av = document.createElement("img");
+      av.className = "avatar avatar-head";
+      av.src = "/abby-head.webp";
+      av.alt = "Abby";
+      row.appendChild(av);
+    }
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = text;
+    row.appendChild(bubble);
+    chatLog.appendChild(row);
+    chatLog.scrollTop = chatLog.scrollHeight;
+    return bubble;
+  }
+
+  function renderEmptyHint() {
+    chatLog.innerHTML = "";
+    const wrap = document.createElement("div");
+    wrap.className = "empty-hint";
+    wrap.innerHTML = "<img class='avatar avatar-head' src='/abby-head.webp' alt='Abby'><h2>Oi, eu sou a Abby</h2><p>Pergunte sobre inovação ou regulatório do setor HPPC. Toda resposta vem com a fonte usada.</p>";
+    chatLog.appendChild(wrap);
+  }
+  renderEmptyHint();
+
+  async function handleSend() {
+    const text = chatInput.value.trim();
+    if (!text || sending) return;
+    sending = true;
+    sendBtn.disabled = true;
+    chatInput.value = "";
+    chatInput.style.height = "auto";
+    if (chatLog.querySelector(".empty-hint")) chatLog.innerHTML = "";
+    addRow("user", text);
+    headerGlow.classList.add("thinking");
+    headerAvatar.classList.add("thinking");
+    const botBubble = addRow("bot", "Pensando...");
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-user-email": verifiedEmail },
+        body: JSON.stringify({ message: text, history }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao consultar a IA.");
+      botBubble.textContent = data.text;
+      history.push({ role: "user", content: text });
+      history.push({ role: "assistant", content: data.text });
+    } catch (e) {
+      botBubble.textContent = e.message || "Ocorreu um erro ao consultar a IA. Tente novamente.";
+    } finally {
+      sending = false;
+      sendBtn.disabled = false;
+      headerGlow.classList.remove("thinking");
+      headerAvatar.classList.remove("thinking");
+    }
+  }
+
+  sendBtn.onclick = handleSend;
+  chatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  });
+  chatInput.addEventListener("input", () => {
+    chatInput.style.height = "auto";
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 110) + "px";
+  });
+
+  // ================= Base de conhecimento =================
+  function tagColorVar(cat) {
+    if (cat === "Anvisa") return "var(--tag-anvisa)";
+    if (cat === "Inmetro") return "var(--tag-inmetro)";
+    if (cat === "ABIHPEC") return "var(--tag-abihpec)";
+    return "var(--tag-outro)";
+  }
+
+  function renderBudget() {
+    const total = sources.reduce((sum, s) => sum + (s.content ? s.content.length : 0), 0);
+    const pct = Math.min(100, Math.round((total / MAX_KB_CHARS) * 100));
+    kbBudgetLabel.textContent = total.toLocaleString("pt-BR") + " / " + MAX_KB_CHARS.toLocaleString("pt-BR") + " caracteres · " + sources.length + " fonte" + (sources.length === 1 ? "" : "s");
+    kbBudgetBar.style.width = pct + "%";
+    kbBudget.classList.toggle("warn", pct >= 70 && pct < 95);
+    kbBudget.classList.toggle("over", pct >= 95);
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement("div");
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function renderSources() {
+    sourcesList.innerHTML = "";
+    if (!sources.length) {
+      const div = document.createElement("div");
+      div.className = "no-sources";
+      div.textContent = "Nenhuma fonte cadastrada ainda.";
+      sourcesList.appendChild(div);
+      renderBudget();
+      return;
+    }
+    for (const s of sources) {
+      const card = document.createElement("div");
+      card.className = "source-card";
+      const top = document.createElement("div");
+      top.className = "top";
+      const left = document.createElement("div");
+      left.innerHTML = "<h4>" + escapeHtml(s.title) + "</h4>" +
+        "<div class='meta'><span class='tag' style='background:" + tagColorVar(s.category) + "'>" + escapeHtml(s.category) + "</span> &nbsp;" + escapeHtml(s.origin) + " · " + (s.content ? s.content.length : 0) + " car.</div>";
+      const delBtn = document.createElement("button");
+      delBtn.className = "del";
+      delBtn.textContent = "Remover";
+      delBtn.onclick = () => deleteSource(s.id);
+      top.appendChild(left);
+      top.appendChild(delBtn);
+      const snippet = document.createElement("div");
+      snippet.className = "snippet";
+      snippet.textContent = s.content ? s.content.slice(0, 160) + (s.content.length > 160 ? "..." : "") : "";
+      card.appendChild(top);
+      card.appendChild(snippet);
+      sourcesList.appendChild(card);
+    }
+    renderBudget();
+  }
+
+  async function loadSources() {
+    try {
+      const res = await fetch("/api/sources");
+      sources = await res.json();
+      renderSources();
+    } catch (e) {
+      kbBudgetLabel.textContent = "Não foi possível carregar a base.";
+    }
+  }
+
+  fContent.addEventListener("input", () => {
+    fCharCount.textContent = fContent.value.length.toLocaleString("pt-BR") + " caracteres" + (fContent.value.length > MAX_SOURCE_CHARS ? " (será cortado em " + MAX_SOURCE_CHARS.toLocaleString("pt-BR") + ")" : "");
+  });
+
+  function getAdminKey(forcePrompt) {
+    let key = localStorage.getItem("abby_admin_key") || "";
+    if (!key || forcePrompt) {
+      key = window.prompt("Chave de administrador:", key) || "";
+      if (key) localStorage.setItem("abby_admin_key", key);
+    }
+    return key;
+  }
+
+  async function submitSource() {
+    const title = fTitle.value.trim();
+    const origin = fOrigin.value.trim();
+    const category = fCategory.value;
+    const content = fContent.value.trim();
+    fMsg.textContent = "";
+    fMsg.className = "form-msg";
+    if (!title || !content) {
+      fMsg.textContent = "Preencha ao menos título e conteúdo.";
+      fMsg.className = "form-msg error";
+      return;
+    }
+    fSubmit.disabled = true;
+    try {
+      let key = getAdminKey(false);
+      let res = await fetch("/api/sources", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": key },
+        body: JSON.stringify({ title, origin, category, content }),
+      });
+      if (res.status === 401) {
+        key = getAdminKey(true);
+        res = await fetch("/api/sources", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-admin-key": key },
+          body: JSON.stringify({ title, origin, category, content }),
+        });
+      }
+      if (!res.ok) throw new Error();
+      clearForm();
+      fMsg.textContent = "Fonte adicionada à base.";
+      fMsg.className = "form-msg ok";
+      await loadSources();
+    } catch (e) {
+      fMsg.textContent = "Não foi possível salvar agora. Verifique a chave de administrador e tente de novo.";
+      fMsg.className = "form-msg error";
+    } finally {
+      fSubmit.disabled = false;
+    }
+  }
+  fSubmit.onclick = submitSource;
+
+  function clearForm() {
+    fTitle.value = ""; fOrigin.value = ""; fContent.value = ""; fCategory.value = "Anvisa";
+    fCharCount.textContent = "0 caracteres";
+  }
+
+  async function deleteSource(id) {
+    try {
+      let key = getAdminKey(false);
+      let res = await fetch("/api/sources/" + encodeURIComponent(id), { method: "DELETE", headers: { "x-admin-key": key } });
+      if (res.status === 401) {
+        key = getAdminKey(true);
+        res = await fetch("/api/sources/" + encodeURIComponent(id), { method: "DELETE", headers: { "x-admin-key": key } });
+      }
+      await loadSources();
+    } catch (e) { /* ignore */ }
+  }
+
+  loadSources();
+})();
+</script>
+</body>
+</html>
