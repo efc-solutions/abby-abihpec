@@ -49,10 +49,15 @@
   /* ---------- Tela de acesso (gate por e-mail de associado) ---------- */
   #gate { align-items: center; justify-content: flex-start; padding: 24px; background: radial-gradient(circle at 20% -10%, rgba(105,158,207,.25), transparent 55%), var(--paper); }
   #gate.hidden { display: none; }
-  .gate-card { width: 100%; max-width: 380px; text-align: center; margin: auto; padding: 20px 0; }
-  /* Tamanho fixo e pequeno de propósito — não depende de vh/zoom/DPI da tela
-     de quem acessa, pra nunca ficar grande demais em nenhuma configuração. */
-  .gate-card img.avatar-hero { width: 96px; height: auto; max-height: 96px; object-fit: contain; margin: 0 auto 8px; }
+  /* Avatar ao lado do card (não em cima) — sobra bem mais espaço horizontal
+     pra ele ser grande sem empurrar o formulário/botão "Entrar" pra fora da
+     tela. Em telas estreitas (celular) empilha e o avatar volta a ser menor. */
+  .gate-card { width: 100%; max-width: 680px; margin: auto; padding: 20px 0; display: flex; align-items: center; gap: 36px; text-align: left; }
+  .gate-avatar-col { flex: 0 0 auto; display: flex; justify-content: center; }
+  /* Tamanho fixo de propósito — não depende de vh/zoom/DPI da tela de quem
+     acessa, pra nunca ficar grande (ou pequeno) demais em nenhuma configuração. */
+  .gate-card img.avatar-hero { width: 170px; height: auto; max-height: 170px; object-fit: contain; margin: 0; }
+  .gate-main { flex: 1 1 300px; min-width: 240px; }
   .gate-logo { height: 22px; margin-bottom: 16px; opacity: .95; }
   .gate-card h1 { font-size: 19px; font-weight: 800; margin: 0 0 6px; color: var(--azul-escuro); }
   .gate-card p.sub { font-size: 13px; color: var(--text-dim); margin: 0 0 16px; line-height: 1.5; }
@@ -67,6 +72,11 @@
   .gate-msg.error { color: var(--danger); }
   .gate-msg.ok { color: var(--tag-anvisa); }
   .gate-foot { font-size: 11.5px; color: var(--text-dim); margin-top: 18px; }
+  @media (max-width: 640px) {
+    .gate-card { flex-direction: column; text-align: center; max-width: 380px; gap: 4px; }
+    .gate-main { text-align: center; width: 100%; }
+    .gate-card img.avatar-hero { width: 110px; max-height: 110px; margin: 0 auto 8px; }
+  }
 
   /* ---------- App principal ---------- */
   header.hero { background: linear-gradient(135deg, var(--azul-escuro) 0%, #2c3f68 100%); color: #fff; padding: 16px 20px 14px; position: relative; overflow: hidden; flex-shrink: 0; }
@@ -150,19 +160,23 @@
 
 <div id="gate">
   <div class="gate-card">
-    <img class="avatar-hero" src="/abby-full.webp" alt="Abby">
-    <img class="gate-logo" src="/abihpec-logo.png" alt="ABIHPEC">
-    <h1>Oi, eu sou a Abby</h1>
-    <p class="sub">Assistente de IA da ABIHPEC para Inovação e Assuntos Regulatórios do setor de Beleza e Cuidados Pessoais. Acesso exclusivo para associados.</p>
-    <div class="gate-form">
-      <label for="gateEmail">Seu e-mail</label>
-      <input id="gateEmail" type="email" placeholder="voce@empresa.com.br" autocomplete="email">
-      <label for="gatePassword" style="margin-top:12px">Senha de acesso</label>
-      <input id="gatePassword" type="password" placeholder="Senha fornecida pela ABIHPEC" autocomplete="current-password">
-      <button id="gateSubmit">Entrar</button>
-      <div id="gateMsg" class="gate-msg"></div>
+    <div class="gate-avatar-col">
+      <img class="avatar-hero" src="/abby-full.webp" alt="Abby">
     </div>
-    <p class="gate-foot">Não sabe a senha? Fale com a ABIHPEC.</p>
+    <div class="gate-main">
+      <img class="gate-logo" src="/abihpec-logo.png" alt="ABIHPEC">
+      <h1>Oi, eu sou a Abby</h1>
+      <p class="sub">Assistente de IA da ABIHPEC para Inovação e Assuntos Regulatórios do setor de Beleza e Cuidados Pessoais. Acesso exclusivo para associados.</p>
+      <div class="gate-form">
+        <label for="gateEmail">Seu e-mail</label>
+        <input id="gateEmail" type="email" placeholder="voce@empresa.com.br" autocomplete="email">
+        <label for="gatePassword" style="margin-top:12px">Senha de acesso</label>
+        <input id="gatePassword" type="password" placeholder="Senha fornecida pela ABIHPEC" autocomplete="current-password">
+        <button id="gateSubmit">Entrar</button>
+        <div id="gateMsg" class="gate-msg"></div>
+      </div>
+      <p class="gate-foot">Não sabe a senha? Fale com a ABIHPEC.</p>
+    </div>
   </div>
 </div>
 
