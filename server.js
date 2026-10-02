@@ -94,13 +94,19 @@ const SYSTEM_RULES = [
   "Você é a Abby, a assistente de IA da ABIHPEC, especializada em Inovação e Assuntos Regulatórios do",
   "setor de Beleza e Cuidados Pessoais.",
   "",
-  "Responda SOMENTE com base no CONTEÚDO DE REFERÊNCIA fornecido abaixo. Se a resposta não",
-  "estiver nele, diga claramente que não encontrou a informação nas fontes disponíveis — não",
-  "complete com conhecimento geral não verificado.",
+  "Responda com base no CONTEÚDO DE REFERÊNCIA fornecido abaixo. Você também tem uma ferramenta",
+  "de busca na internet (web_search), liberada SOMENTE para os sites oficiais/institucionais: Anvisa",
+  "(incluindo a consulta de processos e de produtos regularizados), Inmetro, a biblioteca de RDCs de",
+  "cosméticos (Datalegis), o site da ABIHPEC, o Beauty Care Brazil e o Summit de Inovação — use-a",
+  "quando a pergunta for sobre legislação, norma ou informação oficial que não esteja no conteúdo de",
+  "referência abaixo. Se mesmo assim não encontrar a resposta nem no conteúdo de referência nem",
+  "nesses sites oficiais, diga claramente que não encontrou a informação — não complete com",
+  "conhecimento geral não verificado.",
   "",
   "Regras:",
-  "- Sempre indique a fonte de cada informação usada (o nome/origem exatamente como aparece",
-  "  no cabeçalho \"[Fonte: ...]\" de cada trecho).",
+  "- Sempre indique a fonte de cada informação usada: o nome/origem exatamente como aparece no",
+  "  cabeçalho \"[Fonte: ...]\" de cada trecho do conteúdo de referência, ou o link da página",
+  "  encontrada pela busca na internet.",
   "- Se a informação vier de mais de uma fonte, cite todas.",
   "- Não responda sobre medicamentos ou qualquer tema fora do setor de Beleza e Cuidados Pessoais",
   "  (incluindo saneantes), mesmo que a informação esteja disponível no conteúdo de referência ou",
@@ -221,6 +227,27 @@ app.post('/api/chat', async (req, res) => {
         model: 'claude-sonnet-4-6',
         max_tokens: 1200,
         messages: merged,
+        // Busca na internet liberada só pra sites oficiais/institucionais
+        // (Anvisa, Inmetro, biblioteca de RDCs de cosméticos, ABIHPEC,
+        // Beauty Care Brazil e Summit de Inovação).
+        // Custo à parte dos tokens: US$ 10 a cada 1.000 buscas — max_uses
+        // limita a no máximo 3 buscas por pergunta.
+        tools: [
+          {
+            type: 'web_search_20250305',
+            name: 'web_search',
+            max_uses: 3,
+            allowed_domains: [
+              'www.gov.br/anvisa',
+              'consultas.anvisa.gov.br',
+              'anvisalegis.datalegis.net',
+              'www.gov.br/inmetro',
+              'abihpec.org.br',
+              'beautycarebrazil.org.br/regulamentacao-tecnica',
+              'summitinovacao.com.br',
+            ],
+          },
+        ],
       }),
     });
 
@@ -242,6 +269,7 @@ app.post('/api/chat', async (req, res) => {
       timestamp: Date.now(),
       inputTokens: usage.input_tokens || 0,
       outputTokens: usage.output_tokens || 0,
+      webSearches: (usage.server_tool_use && usage.server_tool_use.web_search_requests) || 0,
     });
 
     res.json({ text });
