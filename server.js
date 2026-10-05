@@ -225,7 +225,7 @@ app.post('/api/chat', async (req, res) => {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1200,
+        max_tokens: 2048,
         messages: merged,
         // Busca na internet liberada só pra sites oficiais/institucionais
         // (Anvisa, Inmetro, biblioteca de RDCs de cosméticos, ABIHPEC,
