@@ -17,11 +17,16 @@
 // registrada — não precisa criar nada manualmente na planilha.
 
 const ABA_USO = "Uso";
+const ABA_SUGESTOES = "Sugestões";
 
 function doPost(e) {
   try {
     const dados = JSON.parse(e.postData.contents);
-    registrarUso(dados);
+    if (dados.tipo === "sugestao") {
+      registrarSugestao(dados);
+    } else {
+      registrarUso(dados);
+    }
     return responder({ status: "ok" });
   } catch (err) {
     return responder({ status: "erro", mensagem: String(err) });
@@ -42,6 +47,23 @@ function registrarUso(dados) {
     entrada,
     saida,
     entrada + saida,
+  ]);
+}
+
+// Sugestões enviadas pela aba "Sugestões" do site. A aba é criada sozinha.
+function registrarSugestao(dados) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let aba = ss.getSheetByName(ABA_SUGESTOES);
+  if (!aba) {
+    aba = ss.insertSheet(ABA_SUGESTOES);
+    aba.appendRow(["Data/Hora", "E-mail", "Tipo", "Mensagem"]);
+    aba.setFrozenRows(1);
+  }
+  aba.appendRow([
+    new Date(dados.timestamp || Date.now()),
+    dados.email || "(sem e-mail)",
+    dados.categoria || "Outro",
+    dados.texto || "",
   ]);
 }
 

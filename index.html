@@ -120,7 +120,7 @@
   #chatInputBar button { background: var(--azul-medio); color: #fff; border: none; border-radius: var(--radius-sm); padding: 0 18px; font-weight: 700; font-family: var(--font); cursor: pointer; font-size: 14px; }
   #chatInputBar button:hover { background: var(--azul-escuro); }
   #chatInputBar button:disabled { opacity: .5; cursor: default; }
-  #kbView { overflow-y: auto; padding: 18px 16px 32px; }
+  #kbView, #sugView { overflow-y: auto; padding: 18px 16px 32px; }
   .kb-budget { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; font-size: 13px; margin-bottom: 16px; }
   .kb-budget .bar-bg { background: var(--paper); border-radius: 6px; height: 6px; overflow: hidden; }
   .kb-budget .bar-fill { height: 100%; background: linear-gradient(90deg, var(--azul-medio), var(--azul-claro)); transition: width .2s; }
@@ -209,6 +209,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         Base de Conhecimento
       </button>
+      <button id="tabSugBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/></svg>
+        Sugestões
+      </button>
     </nav>
   </header>
 
@@ -255,6 +259,26 @@
       </div>
 
       <div id="sourcesList"></div>
+    </section>
+
+    <section id="sugView" class="view">
+      <div class="kb-form">
+        <h3>Sugestões e feedback</h3>
+        <p class="hint">Usou a Abby e teve uma ideia, achou uma resposta errada ou sentiu falta de alguma fonte? Conta pra gente. Seu e-mail de acesso é registrado junto, para a equipe poder entrar em contato se precisar.</p>
+        <label>Tipo</label>
+        <select id="sType">
+          <option value="Sugestão de melhoria">Sugestão de melhoria</option>
+          <option value="Resposta errada ou incompleta">Resposta errada ou incompleta</option>
+          <option value="Fonte que falta na base">Fonte que falta na base</option>
+          <option value="Elogio">Elogio</option>
+          <option value="Outro">Outro</option>
+        </select>
+        <label>Mensagem</label>
+        <textarea id="sText" maxlength="2000" placeholder="Escreva aqui. Se for sobre uma resposta, conte qual foi a pergunta que você fez."></textarea>
+        <div class="char-count" id="sCharCount">0 / 2.000 caracteres</div>
+        <button id="sSubmit">Enviar sugestão</button>
+        <div id="sMsg" class="form-msg"></div>
+      </div>
     </section>
   </main>
 </div>
@@ -374,14 +398,58 @@
   })();
 
   // ================= Abas =================
+  const tabSugBtn = document.getElementById("tabSugBtn");
+  const sugView = document.getElementById("sugView");
   function switchTab(tab) {
     chatView.classList.toggle("active", tab === "chat");
     kbView.classList.toggle("active", tab === "kb");
+    sugView.classList.toggle("active", tab === "sug");
     tabChatBtn.classList.toggle("active", tab === "chat");
     tabKbBtn.classList.toggle("active", tab === "kb");
+    tabSugBtn.classList.toggle("active", tab === "sug");
   }
   tabChatBtn.onclick = () => switchTab("chat");
   tabKbBtn.onclick = () => switchTab("kb");
+  tabSugBtn.onclick = () => switchTab("sug");
+
+  // ================= Sugestões =================
+  const sType = document.getElementById("sType");
+  const sText = document.getElementById("sText");
+  const sCharCount = document.getElementById("sCharCount");
+  const sSubmit = document.getElementById("sSubmit");
+  const sMsg = document.getElementById("sMsg");
+  sText.addEventListener("input", () => {
+    sCharCount.textContent = sText.value.length.toLocaleString("pt-BR") + " / 2.000 caracteres";
+  });
+  sSubmit.onclick = async () => {
+    const text = sText.value.trim();
+    sMsg.className = "form-msg";
+    if (!text) {
+      sMsg.textContent = "Escreva a sua sugestão antes de enviar.";
+      sMsg.className = "form-msg error";
+      return;
+    }
+    sSubmit.disabled = true;
+    sSubmit.textContent = "Enviando...";
+    try {
+      const res = await fetch("/api/suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-user-email": verifiedEmail },
+        body: JSON.stringify({ text, type: sType.value }),
+      });
+      if (!res.ok) throw new Error();
+      sText.value = "";
+      sCharCount.textContent = "0 / 2.000 caracteres";
+      sMsg.textContent = "Obrigada! Sua sugestão foi enviada para a equipe da ABIHPEC.";
+      sMsg.className = "form-msg ok";
+    } catch (e) {
+      sMsg.textContent = "Não foi possível enviar agora. Tente de novo em instantes.";
+      sMsg.className = "form-msg error";
+    } finally {
+      sSubmit.disabled = false;
+      sSubmit.textContent = "Enviar sugestão";
+    }
+  };
 
   // ================= Chat =================
   function addRow(role, text) {

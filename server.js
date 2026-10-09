@@ -117,6 +117,11 @@ const SYSTEM_RULES = [
   "  antigas na sua base ainda usam o nome anterior, \"Higiene Pessoal, Perfumaria e Cosméticos\"",
   "  (ou a sigla \"HPPC\") — ao usar informação dessas fontes, SEMPRE substitua esse nome antigo",
   "  por \"Beleza e Cuidados Pessoais\" na sua resposta, mesmo citando a fonte normalmente.",
+  "- Seja concisa: respostas curtas e diretas, com no máximo cerca de 150 palavras. Vá direto ao",
+  "  ponto, sem introdução e sem repetir a pergunta. Se a lista for longa, cite só os itens",
+  "  principais e ofereça detalhar o restante se a pessoa quiser.",
+  "- Escreva em texto simples: não use markdown (nada de **negrito**, # ou tabelas). Para listas,",
+  "  use hífen simples no começo da linha.",
   "- Tom institucional, claro, objetivo e cordial — público inclui perfis técnicos e não técnicos.",
   "- Fale na primeira pessoa como Abby, sem exagerar na personalidade; você é uma assistente",
   "  técnica confiável, não uma mascote engraçadinha."
@@ -163,6 +168,52 @@ app.delete('/api/sources/:id', requireAdmin, (req, res) => {
   const sources = readSources().filter(s => s.id !== req.params.id);
   writeSources(sources);
   res.status(204).end();
+});
+
+// ---------- Sugestões / feedback dos usuários ----------
+// Cada sugestão vai pra planilha (aba "Sugestões", via o mesmo webhook do log
+// de uso) e também fica num arquivo local como cópia de segurança. O arquivo
+// local pode ser zerado em novo deploy (disco efêmero do Render), por isso a
+// planilha é a fonte principal.
+const SUGGESTIONS_FILE = path.join(__dirname, 'suggestions.json');
+const MAX_SUGGESTION_CHARS = 2000;
+const SUGGESTION_TYPES = ['Elogio', 'Sugestão de melhoria', 'Resposta errada ou incompleta', 'Fonte que falta na base', 'Outro'];
+
+function readSuggestions() {
+  try {
+    return JSON.parse(fs.readFileSync(SUGGESTIONS_FILE, 'utf-8'));
+  } catch (e) {
+    return [];
+  }
+}
+
+app.post('/api/suggestions', (req, res) => {
+  const { text, type } = req.body || {};
+  const cleanText = String(text || '').trim().slice(0, MAX_SUGGESTION_CHARS);
+  if (!cleanText) {
+    return res.status(400).json({ error: 'Escreva a sua sugestão antes de enviar.' });
+  }
+  const entry = {
+    id: crypto.randomUUID(),
+    email: normalizeEmail(req.get('x-user-email')) || null,
+    timestamp: Date.now(),
+    type: SUGGESTION_TYPES.includes(type) ? type : 'Outro',
+    text: cleanText,
+  };
+  try {
+    const all = readSuggestions();
+    all.unshift(entry);
+    fs.writeFileSync(SUGGESTIONS_FILE, JSON.stringify(all, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('Falha ao salvar sugestão localmente:', e);
+  }
+  logUsageToSheet({ tipo: 'sugestao', email: entry.email, timestamp: entry.timestamp, categoria: entry.type, texto: entry.text });
+  res.status(201).json({ ok: true });
+});
+
+// Só quem tem a chave de administrador consegue ler as sugestões.
+app.get('/api/suggestions', requireAdmin, (req, res) => {
+  res.json(readSuggestions());
 });
 
 // ---------- Rota de acesso (gate por e-mail + senha única) ----------
